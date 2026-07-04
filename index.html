@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>스마트 라면 타이머 (Smart Ramen Timer)</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body {
+      font-family: 'Noto Sans KR', 'Poppins', sans-serif;
+      background-color: #fcf8f2;
+    }
+    .ramen-gradient {
+      background: linear-gradient(135deg, #ff4e50 0%, #f9d423 100%);
+    }
+    .custom-shadow {
+      box-shadow: 0 10px 30px -10px rgba(239, 68, 68, 0.15);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between text-gray-800">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-orange-100 shadow-sm sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+      <div class="flex items-center gap-3">
+        <div class="p-2.5 bg-red-500 rounded-2xl text-white shadow-md shadow-red-500/20">
+          <i data-lucide="flame" class="w-6 h-6 animate-pulse"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+            <span id="header-title-text">스마트 라면 조리 네비게이터</span>
+          </h1>
+          <p class="text-xs text-gray-500 font-medium">
+            Developer: <span class="text-red-600 font-semibold">가치있는미래교육연구소 대표 김병찬</span>
+          </p>
+        </div>
+      </div>
+      
+      <!-- Language Selector -->
+      <div class="flex items-center gap-2 bg-orange-50 px-3 py-1.5 rounded-xl border border-orange-100">
+        <i data-lucide="languages" class="w-4 h-4 text-orange-600"></i>
+        <select id="lang-select" class="bg-transparent border-none text-sm font-semibold text-orange-800 focus:outline-none cursor-pointer">
+          <option value="ko" selected>한국어 (Korean)</option>
+          <option value="en">English</option>
+          <option value="zh">中文 (Chinese)</option>
+          <option value="es">Español (Spanish)</option>
+          <option value="de">Deutsch (German)</option>
+          <option value="ja">日本語 (Japanese)</option>
+          <option value="vi">Tiếng Việt (Vietnamese)</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="max-w-7xl mx-auto px-4 py-6 w-full flex-grow grid grid-cols-1 lg:grid-cols-12 gap-6">
+    
+    <!-- Left Panel: Configuration -->
+    <section class="lg:col-span-5 bg-white rounded-3xl p-6 border border-orange-50 custom-shadow flex flex-col justify-between">
+      <div>
+        <div class="flex items-center gap-2 mb-6 border-b border-orange-100 pb-3">
+          <i data-lucide="sliders" class="text-red-500 w-5 h-5"></i>
+          <h2 id="section-config-title" class="text-lg font-bold text-gray-900">조리 옵션 설정</h2>
+        </div>
+
+        <!-- 1. Ramen Selection -->
+        <div class="mb-5">
+          <label id="label-ramen-type" class="block text-sm font-bold text-gray-700 mb-2">🍜 라면 종류 선택</label>
+          <div class="grid grid-cols-2 gap-2" id="ramen-options-container">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- 2. Heat Source Selection -->
+        <div class="mb-5">
+          <label id="label-heat-source" class="block text-sm font-bold text-gray-700 mb-2">🔥 가열 기구 선택 (물 끓는 시간 반영)</label>
+          <div class="grid grid-cols-2 gap-3">
+            <button type="button" onclick="setHeatSource('gas')" id="btn-heat-gas" class="flex items-center justify-between p-3 rounded-2xl border-2 border-orange-500 bg-orange-50/50 text-orange-900 font-semibold transition-all">
+              <span class="flex items-center gap-2">
+                <i data-lucide="sparkle" class="w-4 h-4 text-orange-500"></i>
+                <span id="text-gas">가스레인지</span>
+              </span>
+              <span class="text-xs px-2 py-0.5 bg-orange-200 text-orange-800 rounded-md font-bold">4분</span>
+            </button>
+            <button type="button" onclick="setHeatSource('induction')" id="btn-heat-induction" class="flex items-center justify-between p-3 rounded-2xl border border-gray-200 text-gray-600 font-semibold transition-all hover:bg-gray-50">
+              <span class="flex items-center gap-2">
+                <i data-lucide="bolt" class="w-4 h-4 text-gray-400"></i>
+                <span id="text-induction">인덕션</span>
+              </span>
+              <span class="text-xs px-2 py-0.5 bg-gray-200 text-gray-600 rounded-md font-bold">2.5분</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. Toppings -->
+        <div class="mb-5">
+          <label id="label-toppings" class="block text-sm font-bold text-gray-700 mb-2">🥬 추가 토ppings (선택사항)</label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-orange-50/30 cursor-pointer transition-all">
+              <input type="checkbox" id="topping-ricecake" class="w-5 h-5 accent-red-500 rounded">
+              <span class="text-sm font-semibold text-gray-700" id="top-ricecake-label">떡국떡 (면과 동시)</span>
+            </label>
+            <label class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-orange-50/30 cursor-pointer transition-all">
+              <input type="checkbox" id="topping-greenonion" class="w-5 h-5 accent-red-500 rounded">
+              <span class="text-sm font-semibold text-gray-700" id="top-greenonion-label">대파 (조리후반)</span>
+            </label>
+            <label class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-orange-50/30 cursor-pointer transition-all">
+              <input type="checkbox" id="topping-cheese" class="w-5 h-5 accent-red-500 rounded">
+              <span class="text-sm font-semibold text-gray-700" id="top-cheese-label">슬라이스 치즈 (완성직전)</span>
+            </label>
+            <label class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-orange-50/30 cursor-pointer transition-all">
+              <input type="checkbox" id="topping-egg" onchange="toggleEggOptions()" class="w-5 h-5 accent-red-500 rounded">
+              <span class="text-sm font-semibold text-gray-700" id="top-egg-label">계란</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 4. Egg Option (Conditional) -->
+        <div id="egg-option-panel" class="hidden mb-6 p-4 bg-yellow-50/50 border border-yellow-100 rounded-2xl animate-fadeIn">
+          <label id="label-egg-style" class="block text-xs font-bold text-yellow-800 uppercase tracking-wider mb-2">🍳 계란 익힘 정도 설정</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" onclick="setEggStyle('half')" id="btn-egg-half" class="p-2.5 rounded-xl border-2 border-yellow-500 bg-yellow-50 text-yellow-900 font-bold text-sm transition-all text-center">
+              <span id="text-egg-soft">반숙 (조리종료 1.5분 전)</span>
+            </button>
+            <button type="button" onclick="setEggStyle('full')" id="btn-egg-full" class="p-2.5 rounded-xl border border-gray-200 text-gray-500 font-semibold text-sm transition-all text-center hover:bg-gray-50">
+              <span id="text-egg-hard">완숙 (면 투입시 동시)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Button to apply config -->
+      <div class="pt-4 border-t border-gray-100">
+        <button onclick="applyConfiguration()" class="w-full py-4 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-2xl font-bold shadow-lg shadow-red-500/20 hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center gap-2">
+          <i data-lucide="chef-hat" class="w-5 h-5"></i>
+          <span id="btn-generate-recipe">맞춤형 레시피 생성 & 세팅하기</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Right Panel: Active Timer & Status -->
+    <section class="lg:col-span-7 bg-white rounded-3xl p-6 border border-orange-50 custom-shadow flex flex-col justify-between">
+      <div class="flex-grow flex flex-col justify-between">
+        
+        <!-- Recipe Title Card -->
+        <div class="bg-gradient-to-r from-orange-50 to-amber-50/30 p-4 rounded-2xl border border-orange-100 mb-4">
+          <div class="flex items-start justify-between">
+            <div>
+              <span id="badge-recipe-ready" class="inline-block text-[10px] bg-red-100 text-red-600 font-extrabold uppercase px-2 py-0.5 rounded-md mb-1 tracking-wider">RECIPE LOADED</span>
+              <h3 id="display-ramen-name" class="text-xl font-bold text-gray-900">신라면 레시피</h3>
+              <p id="display-ramen-desc" class="text-sm text-gray-600 mt-1">쫄깃한 면발과 매콤한 국물의 대표 주자</p>
+            </div>
+            <div class="text-right">
+              <span id="label-target-water" class="text-xs text-gray-500 block font-semibold">권장 물 용량</span>
+              <span id="display-water-amount" class="text-lg font-black text-blue-600">550 ml</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Master Visual Cooking Step Timeline -->
+        <div class="mb-4">
+          <div class="flex justify-between items-center mb-2">
+            <span id="label-flow" class="text-xs font-bold text-gray-500 uppercase tracking-widest">전체 조리 프로세스</span>
+            <span class="text-xs font-black text-orange-600" id="display-current-step-index">STEP 1 / 4</span>
+          </div>
+          <div class="grid grid-cols-4 gap-2" id="timeline-progress-bars">
+            <div class="h-2 rounded-full bg-gray-200 overflow-hidden" id="bar-step-0"><div class="h-full bg-red-500 transition-all duration-300 w-0"></div></div>
+            <div class="h-2 rounded-full bg-gray-200 overflow-hidden" id="bar-step-1"><div class="h-full bg-red-500 transition-all duration-300 w-0"></div></div>
+            <div class="h-2 rounded-full bg-gray-200 overflow-hidden" id="bar-step-2"><div class="h-full bg-red-500 transition-all duration-300 w-0"></div></div>
+            <div class="h-2 rounded-full bg-gray-200 overflow-hidden" id="bar-step-3"><div class="h-full bg-red-500 transition-all duration-300 w-0"></div></div>
+          </div>
+        </div>
+
+        <!-- Active Stage Board -->
+        <div class="flex-grow flex flex-col justify-center items-center py-6 text-center">
+          <div id="step-icon-bg" class="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center text-red-500 mb-3">
+            <i data-lucide="waves" class="w-8 h-8" id="step-icon"></i>
+          </div>
+          <h4 id="display-step-title" class="text-2xl font-black text-gray-900 mb-1">1단계: 물 끓이기</h4>
+          <p id="display-step-instruction" class="text-sm text-gray-600 max-w-md mb-6 font-medium">가스레인지 불을 켜고 물 550ml를 넣은 냄비를 올려 끓여주세요.</p>
+
+          <!-- Main Huge Timer Display -->
+          <div class="relative flex items-center justify-center mb-6">
+            <div class="absolute inset-0 bg-red-500/5 blur-3xl rounded-full scale-110"></div>
+            <div class="relative border-4 border-orange-100 rounded-full w-52 h-52 flex flex-col items-center justify-center bg-white shadow-xl">
+              <!-- SVG Circular Progress -->
+              <svg class="absolute top-0 left-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="46" stroke="#fff4eb" stroke-width="4" fill="transparent"/>
+                <circle id="timer-ring" cx="50" cy="50" r="46" stroke="#f97316" stroke-width="4" fill="transparent" stroke-dasharray="289" stroke-dashoffset="0" stroke-linecap="round" class="transition-all duration-100"/>
+              </svg>
+              <!-- Text -->
+              <span class="text-4xl font-extrabold font-mono tracking-tight text-gray-900" id="timer-text">04:00</span>
+              <span class="text-[10px] uppercase font-black text-orange-500 tracking-widest mt-1" id="timer-status-tag">READY</span>
+            </div>
+          </div>
+
+          <!-- Quick Actions Notification/Banner -->
+          <div id="active-toppings-indicator" class="hidden mb-4 px-3 py-1 bg-red-50 border border-red-100 rounded-full text-xs font-bold text-red-700 animate-pulse">
+            <!-- Dynamic topping text for current step -->
+          </div>
+        </div>
+
+        <!-- Timer Controls Panel -->
+        <div class="grid grid-cols-12 gap-3 mt-4 pt-4 border-t border-gray-100">
+          
+          <!-- Master Start/Stop Control (5 cols) -->
+          <button id="btn-master-play" onclick="toggleTimer()" class="col-span-5 py-4 px-3 bg-green-500 text-white rounded-2xl font-black text-base shadow-lg shadow-green-500/20 hover:opacity-95 transition-all flex items-center justify-center gap-2">
+            <i data-lucide="play" class="w-5 h-5 fill-white" id="icon-play"></i>
+            <span id="text-play">시작</span>
+          </button>
+
+          <!-- Next Stage (Visible & functional ALWAYS during cook) (7 cols) -->
+          <button id="btn-next-stage" onclick="advanceStep()" class="col-span-7 py-4 px-3 bg-orange-600 text-white rounded-2xl font-black text-base shadow-lg shadow-orange-600/10 hover:bg-orange-700 transition-all flex items-center justify-center gap-2">
+            <span id="text-next-step">다음 단계</span>
+            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+          </button>
+
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Global Custom Alert Modal -->
+  <div id="alert-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-3xl p-6 max-w-sm w-full border border-orange-100 text-center shadow-2xl animate-scaleUp">
+      <div class="w-16 h-16 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-4">
+        <i data-lucide="bell-ring" class="w-8 h-8 animate-bounce"></i>
+      </div>
+      <h3 id="modal-title" class="text-lg font-black text-gray-900 mb-2">알람</h3>
+      <p id="modal-desc" class="text-sm text-gray-600 mb-6">단계가 끝났습니다. 다음 단계로 넘어가시겠습니까?</p>
+      <button onclick="closeModal()" class="w-full py-3 bg-red-500 text-white rounded-xl font-bold shadow-lg shadow-red-500/20 hover:bg-red-600 transition-all">
+        OK
+      </button>
+    </div>
+  </div>
+
+  <!-- Audio Element for Alarm Beep -->
+  <audio id="alarm-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-120.wav" preload="auto"></audio>
+
+  <!-- Footer displaying Developer info prominently -->
+  <footer class="bg-gray-950 text-gray-400 py-6 mt-8 border-t border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
+      <div>
+        <p class="text-sm font-semibold text-white">가치있는미래교육연구소 <span class="text-gray-400 font-normal">| Smart Ramen Timer</span></p>
+        <p class="text-xs text-gray-500 mt-1">© 2026 Valuable Future Education Research Institute. All rights reserved.</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="text-right">
+          <p class="text-xs text-gray-500">Program Director & Advisor</p>
+          <p class="text-sm font-bold text-orange-400">김병찬 대표</p>
+        </div>
+        <div class="h-8 w-[1px] bg-gray-800"></div>
+        <div class="text-xs px-3 py-1 bg-red-950/50 border border-red-900/30 rounded-lg text-red-400 font-semibold">
+          K-Food Guide System v2.0
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Translation & Logic Script -->
+  <script>
+    // 1. Translation Dictionary (7 languages: KO, EN, ZH, ES, DE, JA, VI)
+    // No emoticons are stored in TTS property to prevent them from being spoken.
+    const translations = {
+      ko: {
+        title: "스마트 라면 조리 네비게이터",
+        configTitle: "조리 옵션 설정",
+        ramenType: "🍜 라면 종류 선택",
+        heatSource: "🔥 가열 기구 선택 (물 끓는 시간 반영)",
+        gas: "가스레인지",
+        induction: "인덕션",
+        toppings: "🥬 추가 토핑 (선택사항)",
+        ricecake: "떡국떡 (면과 동시)",
+        greenonion: "대파 (조리후반)",
+        cheese: "슬라이스 치즈 (완성직전)",
+        egg: "계란",
+        eggStyle: "🍳 계란 익힘 정도 설정",
+        half: "반숙 (조리종료 1.5분 전)",
+        full: "완숙 (면 투입시 동시)",
+        generateRecipe: "맞춤형 레시피 생성 & 세팅하기",
+        targetWater: "권장 물 용량",
+        flow: "전체 조리 프로세스",
+        btnPlay: "시작",
+        btnPause: "일시정지",
+        btnNext: "다음 단계",
+        ready: "대기중",
+        cooking: "조리중",
+        paused: "일시정지됨",
+        completed: "완성!",
+        modalTitle: "알림",
+        modalOk: "확인",
+        descShin: "쫄깃한 면발과 매콤한 국물의 대표 주자",
+        descJin: "매운맛과 순한맛의 완벽한 조화와 감칠맛",
+        descNeoguri: "오동통한 면발과 시원한 다시마 육수",
+        descChapagetti: "정통 짜장스프와 부드러운 올리브유의 조화",
+        descBuldak: "눈물 나게 매운 중독성 있는 볶음면",
+        ttsWaterBoil: "물이 끓기 시작하면 알려드릴 테니 냄비를 준비해 불을 켜주세요.",
+        ttsNoodleAndSoup: "물이 끓고 있습니다. 면과 스프를 냄비에 투입해 주세요.",
+        ttsNoodleWithRicecake: "물이 끓고 있습니다. 면, 스프, 그리고 떡을 투입해 주세요.",
+        ttsNoodleWithFullEgg: "물이 끓고 있습니다. 면, 스프, 그리고 완숙용 계란을 투입해 주세요.",
+        ttsToppingAdd: "토핑 투입 시간입니다. 대파와 슬라이스 치즈를 넣어 주세요.",
+        ttsHalfEggAdd: "반숙 계란을 넣을 타이밍입니다. 계란을 깨서 국물에 넣어주세요.",
+        ttsWaterDrain: "면이 다 익어갑니다. 물을 여덟 스푼 정도만 남기고 따라 버려주세요.",
+        ttsMixSauce: "스프를 넣어주세요. 약한 불에서 30초간 빠르게 볶아줍니다.",
+        ttsFinishSoup: "축하합니다! 라면 조리가 완료되었습니다. 맛있게 드세요!",
+        ttsFinishDry: "소스 비비기가 완료되었습니다. 맛있게 드세요!"
+      },
+      en: {
+        title: "Smart Ramen Navigator",
+        configTitle: "Cooking Configuration",
+        ramenType: "Select Ramen Type",
+        heatSource: "Heat Source (Water boiling time)",
+        gas: "Gas Stove",
+        induction: "Induction",
+        toppings: "Extra Toppings (Optional)",
+        ricecake: "Rice Cake (with noodles)",
+        greenonion: "Green Onion (at the end)",
+        cheese: "Slice Cheese (at the very end)",
+        egg: "Egg",
+        eggStyle: "Egg Cooking Preference",
+        half: "Soft-boiled (1.5m before end)",
+        full: "Hard-boiled (with noodles)",
+        generateRecipe: "Generate & Load Custom Recipe",
+        targetWater: "Water Needed",
+        flow: "Overall Cooking Process",
+        btnPlay: "Start",
+        btnPause: "Pause",
+        btnNext: "Next Step",
+        ready: "READY",
+        cooking: "COOKING",
+        paused: "PAUSED",
+        completed: "FINISHED!",
+        modalTitle: "Notification",
+        modalOk: "OK",
+        descShin: "Korea's representative spicy ramyun with chewy noodles.",
+        descJin: "Perfect balance of savory flavor and mild spiciness.",
+        descNeoguri: "Thick, chewy noodles in rich kelp broth.",
+        descChapagetti: "Instant black bean sauce noodle with olive oil.",
+        descBuldak: "Addictively spicy stir-fried chicken-flavored noodles.",
+        ttsWaterBoil: "Please prepare your pot and turn on the heat. I will alert you when water is ready.",
+        ttsNoodleAndSoup: "Water is boiling. Please add noodles and soup powder into the pot.",
+        ttsNoodleWithRicecake: "Water is boiling. Please add noodles, soup, and rice cakes.",
+        ttsNoodleWithFullEgg: "Water is boiling. Please add noodles, soup, and the egg now for hard-boiled style.",
+        ttsToppingAdd: "Time to add toppings. Please throw in green onions and cheese.",
+        ttsHalfEggAdd: "Time for soft-boiled egg. Crack the egg into the boiling broth.",
+        ttsWaterDrain: "Noodles are cooked. Drain the hot water, leaving about eight spoons.",
+        ttsMixSauce: "Add the sauce packets. Stir-fry quickly over low heat for 30 seconds.",
+        ttsFinishSoup: "Congratulations! Your ramen is perfectly cooked. Enjoy your meal!",
+        ttsFinishDry: "Sauce is fully mixed. Enjoy your delicious noodles!"
+      },
+      zh: {
+        title: "智能拉面烹饪导航仪",
+        configTitle: "烹饪参数设置",
+        ramenType: "选择拉面种类",
+        heatSource: "热源选择 (反映烧水时间)",
+        gas: "燃气灶",
+        induction: "电磁炉",
+        toppings: "添加配料 (可选)",
+        ricecake: "年糕片 (与面饼同时)",
+        greenonion: "大葱 (烹饪后期)",
+        cheese: "芝士片 (完成前夕)",
+        egg: "鸡蛋",
+        eggStyle: "鸡蛋熟度设定",
+        half: "半熟蛋 (结束前 1.5分钟)",
+        full: "全熟蛋 (与面饼同时)",
+        generateRecipe: "生成并加载定制食谱",
+        targetWater: "推荐水量",
+        flow: "整体烹饪流程",
+        btnPlay: "开始",
+        btnPause: "暂停",
+        btnNext: "下一步",
+        ready: "准备就绪",
+        cooking: "正在烹饪",
+        paused: "已暂停",
+        completed: "完成!",
+        modalTitle: "提示",
+        modalOk: "确认",
+        descShin: "劲道面条与香辣浓汤的完美结合",
+        descJin: "辣味与原味的极致协调，鲜美无比",
+        descNeoguri: "宽厚面条搭配清凉昆布鲜汤",
+        descChapagetti: "传统炸酱粉与香浓橄榄油的完美碰撞",
+        descBuldak: "辣到流泪却极具上瘾性的干拌面",
+        ttsWaterBoil: "请准备好锅并开火。水烧开时我会提醒您。",
+        ttsNoodleAndSoup: "水开了。请将面条和调料包放入锅中。",
+        ttsNoodleWithRicecake: "水开了。请将面条、调料包和年糕片一起放入。",
+        ttsNoodleWithFullEgg: "水开了。请放入面条、调料包，以及做全熟用的鸡蛋。",
+        ttsToppingAdd: "到了放配料的时间。请放入大葱和芝士。",
+        ttsHalfEggAdd: "请放入半熟蛋。打入鸡蛋并小心滑入汤中。",
+        ttsWaterDrain: "面条煮好了。倒掉多余的水，锅里只留大约八汤匙的水。",
+        ttsMixSauce: "加入酱包，在微火上快速翻炒三十秒。",
+        ttsFinishSoup: "恭喜您！拉面已制作完成。祝您用餐愉快！",
+        ttsFinishDry: "炸酱已拌匀。祝您用餐愉快！"
+      },
+      es: {
+        title: "Navegador Inteligente de Ramen",
+        configTitle: "Configuración de Cocina",
+        ramenType: "Seleccione el tipo de ramen",
+        heatSource: "Fuente de Calor (Tiempo de hervido)",
+        gas: "Estufa de Gas",
+        induction: "Inducción",
+        toppings: "Ingredientes Extra (Opcional)",
+        ricecake: "Pastel de arroz (con fideos)",
+        greenonion: "Cebollín (al final)",
+        cheese: "Queso rebanado (al último minuto)",
+        egg: "Huevo",
+        eggStyle: "Cocción del Huevo",
+        half: "Poco cocido (1.5 min antes de terminar)",
+        full: "Bien cocido (con los fideos)",
+        generateRecipe: "Generar y Cargar Receta",
+        targetWater: "Agua Necesaria",
+        flow: "Proceso General de Cocción",
+        btnPlay: "Iniciar",
+        btnPause: "Pausa",
+        btnNext: "Siguiente Paso",
+        ready: "PREPARADO",
+        cooking: "COCINANDO",
+        paused: "PAUSADO",
+        completed: "¡LISTO!",
+        modalTitle: "Notificación",
+        modalOk: "OK",
+        descShin: "El clásico ramen picante de Corea con fideos muy firmes.",
+        descJin: "Gran equilibrio entre sabor suave y un toque sabroso.",
+        descNeoguri: "Fideos gruesos con caldo de algas súper refrescante.",
+        descChapagetti: "Fideos de salsa de frijol negro con aceite de oliva.",
+        descBuldak: "Fideos salteados extremadamente picantes y adictivos.",
+        ttsWaterBoil: "Prepare su olla y encienda el fuego. Le avisaré cuando el agua esté hirviendo.",
+        ttsNoodleAndSoup: "El agua está hirviendo. Agregue los fideos y la sopa en polvo a la olla.",
+        ttsNoodleWithRicecake: "El agua está hirviendo. Agregue los fideos, la sopa y los pasteles de arroz.",
+        ttsNoodleWithFullEgg: "El agua está hirviendo. Agregue los fideos, la sopa y el huevo para hacerlo bien cocido.",
+        ttsToppingAdd: "Es hora de agregar ingredientes. Ponga el cebollín y el queso.",
+        ttsHalfEggAdd: "Momento de agregar el huevo poco cocido. Rompa el huevo en el caldo.",
+        ttsWaterDrain: "Los fideos ya están cocidos. Escurra el agua caliente y deje unas ocho cucharadas.",
+        ttsMixSauce: "Agregue la salsa. Saltee rápidamente a fuego bajo por treinta segundos.",
+        ttsFinishSoup: "¡Felicidades! Su ramen está perfectamente cocinado. ¡Buen provecho!",
+        ttsFinishDry: "¡Los fideos están bien mezclados con la salsa! ¡Buen provecho!"
+      },
+      de: {
+        title: "Intelligenter Ramen-Navigator",
+        configTitle: "Koch-Konfiguration",
+        ramenType: "Ramen-Sorte wählen",
+        heatSource: "Hitzequelle (Siedezeit)",
+        gas: "Gasherd",
+        induction: "Induktionsherd",
+        toppings: "Extra-Toppings (Optional)",
+        ricecake: "Reiskuchen (mit Nudeln)",
+        greenonion: "Frühlingszwiebeln (am Ende)",
+        cheese: "Scheibenkäse (ganz am Ende)",
+        egg: "Ei",
+        eggStyle: "Ei-Koch-Präferenz",
+        half: "Weichgekocht (1.5 Min. vor Ende)",
+        full: "Hartgekocht (mit Nudeln)",
+        generateRecipe: "Rezept Generieren & Laden",
+        targetWater: "Wasserempfehlung",
+        flow: "Kochprozess",
+        btnPlay: "Start",
+        btnPause: "Pause",
+        btnNext: "Nächster Schritt",
+        ready: "BEREIT",
+        cooking: "KOCHT",
+        paused: "PAUSIERT",
+        completed: "FERTIG!",
+        modalTitle: "Hinweis",
+        modalOk: "OK",
+        descShin: "Koreas repräsentative scharfe Ramen mit elastischen Nudeln.",
+        descJin: "Perfekte Balance zwischen milder Schärfe und Würze.",
+        descNeoguri: "Dicke, elastische Nudeln in reichhaltiger Seetangbrühe.",
+        descChapagetti: "Nudeln mit traditioneller schwarzer Bohnensauce und Olivenöl.",
+        descBuldak: "Scharf an der Grenze zur Suchtgefahr, scharfe gebratene Nudeln.",
+        ttsWaterBoil: "Bereiten Sie den Topf vor und schalten Sie den Herd ein. Ich melde mich, wenn das Wasser kocht.",
+        ttsNoodleAndSoup: "Das Wasser kocht. Bitte Nudeln und Suppenpulver in den Topf geben.",
+        ttsNoodleWithRicecake: "Das Wasser kocht. Bitte Nudeln, Suppenpulver und Reiskuchen hinzufügen.",
+        ttsNoodleWithFullEgg: "Das Wasser kocht. Nudeln, Suppenpulver und das Ei für hartgekochte Version hinzufügen.",
+        ttsToppingAdd: "Zeit für die Toppings. Bitte Frühlingszwiebeln und Käse dazugeben.",
+        ttsHalfEggAdd: "Zeit für das weichgekochte Ei. Das Ei direkt in die Suppe schlagen.",
+        ttsWaterDrain: "Die Nudeln sind fast fertig. Gießen Sie das Wasser ab und lassen Sie etwa acht Esslöffel übrig.",
+        ttsMixSauce: "Fügen Sie die Sauce hinzu. Braten Sie alles bei schwacher Hitze für dreißig Sekunden an.",
+        ttsFinishSoup: "Glückwunsch! Ihre Ramen sind fertig. Guten Appetit!",
+        ttsFinishDry: "Sauce ist fertig gemischt. Guten Appetit!"
+      },
+      ja: {
+        title: "スマート・ラーメン調理ナビ",
+        configTitle: "調理オプション設定",
+        ramenType: "ラーメンの種類選択",
+        heatSource: "加熱器具の選択 (お湯が沸く時間を反映)",
+        gas: "ガスコンロ",
+        induction: "IHヒーター",
+        toppings: "追加トッピング (任意)",
+        ricecake: "トック（餅、麺と同時に投入）",
+        greenonion: "長ネギ（調理後半）",
+        cheese: "スライスチーズ（完成直前）",
+        egg: "卵",
+        eggStyle: "卵の硬さ調整",
+        half: "半熟 (残り1.5分で投入)",
+        full: "固茹で (麺と同時に投入)",
+        generateRecipe: "カスタムレシピ生成＆セット",
+        targetWater: "推奨水量",
+        flow: "調理フロー",
+        btnPlay: "スタート",
+        btnPause: "一時停止",
+        btnNext: "次の段階へ",
+        ready: "待機中",
+        cooking: "調理中",
+        paused: "一時停止中",
+        completed: "完成！",
+        modalTitle: "通知",
+        modalOk: "確認",
+        descShin: "モチモチした麺とピリ辛スープが特徴の国民的ラーメン。",
+        descJin: "辛口とマイルド味の絶妙な調和と深いコク。",
+        descNeoguri: "太麺ともちもち食感、爽やかな昆布だしスープ。",
+        descChapagetti: "本格的なチャジャンソースとオリーブオイルの調和。",
+        descBuldak: "涙が出るほど辛い、中毒性のある激辛炒め麺。",
+        ttsWaterBoil: "お湯が沸くまで案内しますので、鍋を火にかけてください。",
+        ttsNoodleAndSoup: "お湯が沸きました。麺とスープを入れてください。",
+        ttsNoodleWithRicecake: "お湯が沸きました。麺、スープ、そしてトックを入れてください。",
+        ttsNoodleWithFullEgg: "お湯が沸きました。麺、スープ、そして固茹で用の卵を入れてください。",
+        ttsToppingAdd: "トッピングの時間です。ネギとチーズを入れてください。",
+        ttsHalfEggAdd: "半熟卵のタイミングです。卵を割って静かに入れてください。",
+        ttsWaterDrain: "麺が茹で上がりました。お湯を大さじ八杯ほど残して捨ててください。",
+        ttsMixSauce: "ソースを入れてください。弱火で三十秒間素早く炒めます。",
+        ttsFinishSoup: "おめでとうございます！ラーメンが完成しました。美味しくお召し上がりください！",
+        ttsFinishDry: "ソースが絡まりました。美味しくお召し上がりください！"
+      },
+      vi: {
+        title: "Hướng Dẫn Nấu Mì Thông Minh",
+        configTitle: "Thiết Lập Tùy Chọn",
+        ramenType: "Chọn Loại Mì",
+        heatSource: "Thiết Bị Nấu (Thời gian sôi khác nhau)",
+        gas: "Bếp Gas",
+        induction: "Bếp Từ",
+        toppings: "Thêm Topping (Tùy chọn)",
+        ricecake: "Bánh gạo (Cho cùng mì)",
+        greenonion: "Hành lá (Giai đoạn sau)",
+        cheese: "Phô mai lát (Ngay trước khi hoàn thành)",
+        egg: "Trứng",
+        eggStyle: "Chọn độ chín của trứng",
+        half: "Lòng đào (1.5 phút trước khi kết thúc)",
+        full: "Chín hoàn toàn (Cho cùng mì)",
+        generateRecipe: "Tạo & Tải Công Thức Tùy Chỉnh",
+        targetWater: "Lượng Nước Khuyên Dùng",
+        flow: "Quy Trình Nấu Ăn",
+        btnPlay: "Bắt đầu",
+        btnPause: "Tạm dừng",
+        btnNext: "Bước Tiếp Theo",
+        ready: "ĐANG CHỜ",
+        cooking: "ĐANG NẤU",
+        paused: "TẠM DỪNG",
+        completed: "HOÀN THÀNH!",
+        modalTitle: "Thông báo",
+        modalOk: "Xác nhận",
+        descShin: "Mì cay truyền thống Hàn Quốc với sợi mì dai ngon.",
+        descJin: "Sự hài hòa hoàn hảo giữa vị cay dịu và đậm đà.",
+        descNeoguri: "Sợi mì to dai kết hợp với nước dùng rong biển thanh mát.",
+        descChapagetti: "Sự kết hợp giữa sốt tương đen truyền thống và dầu ô liu.",
+        descBuldak: "Mì xào khô siêu cay gây nghiện.",
+        ttsWaterBoil: "Vui lòng chuẩn bị nồi và bật bếp. Tôi sẽ báo khi nước sôi.",
+        ttsNoodleAndSoup: "Nước đã sôi. Vui lòng cho mì và gói gia vị vào nồi.",
+        ttsNoodleWithRicecake: "Nước đã sôi. Vui lòng thêm mì, gia vị và bánh gạo vào.",
+        ttsNoodleWithFullEgg: "Nước đã sôi. Vui lòng cho mì, gói gia vị và trứng vào nấu chín kỹ.",
+        ttsToppingAdd: "Đến lúc thêm topping rồi. Vui lòng cho hành lá và phô mai vào.",
+        ttsHalfEggAdd: "Đến giờ thêm trứng lòng đào. Đập trứng và cho trực tiếp vào nồi nước dùng.",
+        ttsWaterDrain: "Mì sắp chín rồi. Hãy chắt bớt nước, chỉ chừa lại khoảng tám muỗng nước.",
+        ttsMixSauce: "Thêm gói sốt vào. Đảo đều tay trên lửa nhỏ trong vòng ba mươi giây.",
+        ttsFinishSoup: "Chúc mừng bạn! Món mì đã hoàn thành. Hãy thưởng thức ngon miệng nhé!",
+        ttsFinishDry: "Sốt đã được trộn đều. Hãy thưởng thức ngon miệng nhé!"
+      }
+    };
+
+    // 2. Ramen DB with specifications
+    const ramyuns = [
+      { id: "shin", name: "신라면", water: 550, baseCookTime: 270, isDry: false }, // 4.5 mins
+      { id: "jin", name: "진라면", water: 500, baseCookTime: 240, isDry: false },   // 4 mins
+      { id: "neoguri", name: "너구리", water: 550, baseCookTime: 300, isDry: false }, // 5 mins
+      { id: "chapagetti", name: "짜파게티", water: 600, baseCookTime: 300, isDry: true }, // 5 mins (drain and mix)
+      { id: "buldak", name: "불닭볶음면", water: 600, baseCookTime: 300, isDry: true }  // 5 mins (drain and mix 30s)
+    ];
+
+    // 3. State Engine
+    let currentLang = "ko";
+    let selectedRamenId = "shin";
+    let selectedHeatSource = "gas"; // 'gas' or 'induction'
+    let selectedEggStyle = "half";  // 'half' or 'full'
+    
+    let activeSteps = [];
+    let currentStepIdx = 0;
+    let timerVal = 0;
+    let initialTimerVal = 0;
+    let timerInterval = null;
+    let isPlaying = false;
+
+    // Initialization on load
+    window.onload = function() {
+      lucide.createIcons();
+      renderRamenOptions();
+      applyConfiguration();
+      
+      // Hook language select listener
+      document.getElementById('lang-select').addEventListener('change', (e) => {
+        setLanguage(e.target.value);
+      });
+    };
+
+    // Render Ramen Buttons dynamically based on selected language
+    function renderRamenOptions() {
+      const container = document.getElementById('ramen-options-container');
+      container.innerHTML = "";
+      ramyuns.forEach(r => {
+        const isSelected = r.id === selectedRamenId;
+        const activeClass = isSelected ? 'border-2 border-red-500 bg-red-50 text-red-900 font-bold' : 'border border-gray-200 text-gray-700 hover:bg-gray-50';
+        
+        // Translate ramen name for foreigners if needed, but keeping brand names recognizable
+        const btnHtml = `
+          <button type="button" onclick="selectRamen('${r.id}')" id="btn-ramen-${r.id}" class="p-3.5 rounded-2xl flex flex-col justify-center items-center text-center transition-all ${activeClass}">
+            <span class="text-xl mb-1">${getRamenEmoji(r.id)}</span>
+            <span class="text-xs tracking-tight">${translateRamenName(r.id)}</span>
+          </button>
+        `;
+        container.insertAdjacentHTML('beforeend', btnHtml);
+      });
+    }
+
+    function translateRamenName(id) {
+      switch(id) {
+        case "shin": return "Shin Ramyun (신라면)";
+        case "jin": return "Jin Ramyun (진라면)";
+        case "neoguri": return "Neoguri (너구리)";
+        case "chapagetti": return "Chapagetti (짜파게티)";
+        case "buldak": return "Buldak (불닭볶음면)";
+        default: return "";
+      }
+    }
+
+    function getRamenEmoji(id) {
+      if (id === "chapagetti") return "🍝";
+      if (id === "buldak") return "🔥";
+      return "🍜";
+    }
+
+    // Set configuration variables
+    function selectRamen(id) {
+      selectedRamenId = id;
+      renderRamenOptions();
+    }
+
+    function setHeatSource(source) {
+      selectedHeatSource = source;
+      const btnGas = document.getElementById('btn-heat-gas');
+      const btnInduction = document.getElementById('btn-heat-induction');
+      
+      if (source === 'gas') {
+        btnGas.className = "flex items-center justify-between p-3 rounded-2xl border-2 border-orange-500 bg-orange-50/50 text-orange-900 font-semibold transition-all";
+        btnInduction.className = "flex items-center justify-between p-3 rounded-2xl border border-gray-200 text-gray-600 font-semibold transition-all hover:bg-gray-50";
+      } else {
+        btnInduction.className = "flex items-center justify-between p-3 rounded-2xl border-2 border-orange-500 bg-orange-50/50 text-orange-900 font-semibold transition-all";
+        btnGas.className = "flex items-center justify-between p-3 rounded-2xl border border-gray-200 text-gray-600 font-semibold transition-all hover:bg-gray-50";
+      }
+    }
+
+    function toggleEggOptions() {
+      const eggCheckbox = document.getElementById('topping-egg');
+      const eggPanel = document.getElementById('egg-option-panel');
+      if (eggCheckbox.checked) {
+        eggPanel.classList.remove('hidden');
+      } else {
+        eggPanel.classList.add('hidden');
+      }
+    }
+
+    function setEggStyle(style) {
+      selectedEggStyle = style;
+      const btnHalf = document.getElementById('btn-egg-half');
+      const btnFull = document.getElementById('btn-egg-full');
+      
+      if (style === 'half') {
+        btnHalf.className = "p-2.5 rounded-xl border-2 border-yellow-500 bg-yellow-50 text-yellow-900 font-bold text-sm transition-all text-center";
+        btnFull.className = "p-2.5 rounded-xl border border-gray-200 text-gray-500 font-semibold text-sm transition-all text-center hover:bg-gray-50";
+      } else {
+        btnFull.className = "p-2.5 rounded-xl border-2 border-yellow-500 bg-yellow-50 text-yellow-900 font-bold text-sm transition-all text-center";
+        btnHalf.className = "p-2.5 rounded-xl border border-gray-200 text-gray-500 font-semibold text-sm transition-all text-center hover:bg-gray-50";
+      }
+    }
+
+    // Set Translation UI globally
+    function setLanguage(lang) {
+      currentLang = lang;
+      
+      // Update basic labels & text content
+      document.getElementById('header-title-text').innerText = translations[lang].title;
+      document.getElementById('section-config-title').innerText = translations[lang].configTitle;
+      document.getElementById('label-ramen-type').innerText = translations[lang].ramenType;
+      document.getElementById('label-heat-source').innerText = translations[lang].heatSource;
+      document.getElementById('text-gas').innerText = translations[lang].gas;
+      document.getElementById('text-induction').innerText = translations[lang].induction;
+      document.getElementById('label-toppings').innerText = translations[lang].toppings;
+      document.getElementById('top-ricecake-label').innerText = translations[lang].ricecake;
+      document.getElementById('top-greenonion-label').innerText = translations[lang].greenonion;
+      document.getElementById('top-cheese-label').innerText = translations[lang].cheese;
+      document.getElementById('top-egg-label').innerText = translations[lang].egg;
+      document.getElementById('label-egg-style').innerText = translations[lang].eggStyle;
+      document.getElementById('text-egg-soft').innerText = translations[lang].half;
+      document.getElementById('text-egg-hard').innerText = translations[lang].full;
+      document.getElementById('btn-generate-recipe').innerText = translations[lang].generateRecipe;
+      document.getElementById('label-target-water').innerText = translations[lang].targetWater;
+      document.getElementById('label-flow').innerText = translations[lang].flow;
+      
+      // Re-render ramen buttons to catch language switch
+      renderRamenOptions();
+      
+      // Update right panel texts dynamically depending on currently generated steps
+      updateStepUI();
+    }
+
+    // 4. Recipe Generator Algorithm
+    function applyConfiguration() {
+      // Clear interval if active
+      if (timerInterval) clearInterval(timerInterval);
+      isPlaying = false;
+      updateControlButtons();
+
+      const ramen = ramyuns.find(r => r.id === selectedRamenId);
+      const waterTime = (selectedHeatSource === 'gas') ? 240 : 150; // Gas: 4 mins, Induction: 2.5 mins
+      
+      // Toppings flags
+      const hasRiceCake = document.getElementById('topping-ricecake').checked;
+      const hasGreenOnion = document.getElementById('topping-greenonion').checked;
+      const hasCheese = document.getElementById('topping-cheese').checked;
+      const hasEgg = document.getElementById('topping-egg').checked;
+
+      // Construct dynamic steps
+      const steps = [];
+
+      // STEP 1: Boil Water
+      steps.push({
+        titleKey: "1단계: 물 끓이기",
+        titleEn: "Step 1: Boiling Water",
+        titleZh: "第1步: 烧水",
+        titleEs: "Paso 1: Hervir Agua",
+        titleDe: "Schritt 1: Wasser kochen",
+        titleJa: "ステップ1: お湯を沸かす",
+        titleVi: "Bước 1: Đun sôi nước",
+        duration: waterTime,
+        icon: "waves",
+        ttsKey: "ttsWaterBoil"
+      });
+
+      // For Dry type ramen (Chapagetti/Buldak)
+      if (ramen.isDry) {
+        // STEP 2: Cook Noodle + Flakes
+        let noodleTime = ramen.baseCookTime - 30; // Leave last 30s for dry mixing
+        let step2InstructionKo = "물이 끓으면 면과 야채 건더기 스프를 넣고 가끔씩 저어주며 끓입니다.";
+        let step2InstructionEn = "Add noodles and vegetable flakes into boiling water. Stir occasionally.";
+        let step2InstructionZh = "水开后放入面条和蔬菜干料包，不时搅拌一下。";
+        let step2InstructionEs = "Agregue los fideos y las verduras secas. Revuelva ocasionalmente.";
+        let step2InstructionDe = "Nudeln und Gemüseflocken in kochendes Wasser geben. Gelegentlich umrühren.";
+        let step2InstructionJa = "お湯が沸いたら麺とかやくを入れて、たまにかき混ぜながら茹でます。";
+        let step2InstructionVi = "Khi nước sôi, cho mì và gói rau khô vào, thỉnh thoảng khuấy đều.";
+
+        let ttsKey = "ttsNoodleAndSoup";
+
+        if (hasRiceCake) {
+          step2InstructionKo += " (떡국떡도 함께 넣어주세요)";
+          step2InstructionEn += " (Add rice cakes too)";
+          step2InstructionZh += " (同时也放年糕片)";
+          step2InstructionEs += " (Agregue también los pasteles de arroz)";
+          step2InstructionDe += " (Auch Reiskuchen hinzufügen)";
+          step2InstructionJa += " (トックも一緒に入れてください)";
+          step2InstructionVi += " (Cho thêm cả bánh gạo vào nữa)";
+          ttsKey = "ttsNoodleWithRicecake";
+        }
+
+        steps.push({
+          titleKey: "2단계: 면 삶기",
+          titleEn: "Step 2: Boiling Noodles",
+          titleZh: "第2步: 煮面",
+          titleEs: "Paso 2: Cocer Fideos",
+          titleDe: "Schritt 2: Nudeln kochen",
+          titleJa: "ステップ2: 麺を茹でる",
+          titleVi: "Bước 2: Luộc mì",
+          duration: noodleTime,
+          icon: "flame",
+          ttsKey: ttsKey,
+          instructions: {
+            ko: step2InstructionKo,
+            en: step2InstructionEn,
+            zh: step2InstructionZh,
+            es: step2InstructionEs,
+            de: step2InstructionDe,
+            ja: step2InstructionJa,
+            vi: step2InstructionVi
+          }
+        });
+
+        // STEP 3: Drain Water
+        steps.push({
+          titleKey: "3단계: 물 버리기",
+          titleEn: "Step 3: Draining Water",
+          titleZh: "第3步: 沥干水分",
+          titleEs: "Paso 3: Escurrir Agua",
+          titleDe: "Schritt 3: Wasser abgießen",
+          titleJa: "ステップ3: お湯を捨てる",
+          titleVi: "Bước 3: Chắt nước",
+          duration: 30, // Quick action step
+          icon: "droplet-off",
+          ttsKey: "ttsWaterDrain",
+          instructions: {
+            ko: "싱크대에 뜨거운 물을 조심히 따라 버리세요. 냄비 바닥에 숟가락 기준 약 8스푼 정도의 자작한 물만 남겨야 소스가 잘 비벼집니다.",
+            en: "Carefully pour out the hot water into sink. Leave about 8 tablespoons of water in the pot so the sauce mixes nicely.",
+            zh: "小心地把热水倒掉。锅底只留下大约8汤匙（约1/3碗）的水，这样酱汁才容易拌匀。",
+            es: "Con cuidado, vierta el agua caliente. Deje aproximadamente 8 cucharadas de agua en la olla para que la salsa se mezcle bien.",
+            de: "Gießen Sie das heiße Wasser vorsichtig ab. Lassen Sie ca. 8 Esslöffel Wasser im Topf, damit sich die Sauce gut vermischen lässt.",
+            ja: "お湯を注意深く捨てます。鍋の底に大さじ8杯分ほどのお湯を残すと、ソースが綺麗に絡まります。",
+            vi: "Cẩn thận đổ bớt nước nóng đi. Chỉ để lại khoảng 8 muỗng nước ở đáy nồi để trộn sốt cho ngon."
+          }
+        });
+
+        // STEP 4: Mix Sauce & Toppings
+        let step4InstructionKo = "비빔 소스를 넣고 약한 불 위에서 약 30초간 맛있게 비비며 볶아줍니다.";
+        let step4InstructionEn = "Add sauce powder/liquid, stir-fry over low heat for 30s.";
+        let step4InstructionZh = "加入酱包，并在弱火上翻炒约30秒。";
+        let step4InstructionEs = "Agregue la salsa y saltee a fuego bajo por unos 30 segundos.";
+        let step4InstructionDe = "Sauce hinzufügen und bei schwacher Hitze etwa 30 Sekunden lang anbraten.";
+        let step4InstructionJa = "液体・粉末ソースを入れ、弱火の上で約30秒間よく混ぜながら炒めます。";
+        let step4InstructionVi = "Cho gói sốt vào và xào đều tay trên lửa nhỏ trong khoảng 30 giây.";
+
+        let hasLastToppings = (hasGreenOnion || hasCheese || (hasEgg && selectedEggStyle === 'half'));
+        if (hasLastToppings) {
+          let tps = [];
+          if (hasGreenOnion) tps.push("대파");
+          if (hasCheese) tps.push("치즈");
+          if (hasEgg && selectedEggStyle === 'half') tps.push("계란(반숙)");
+          step4InstructionKo += ` 완성 직전 토핑(${tps.join(", ")})을 올려 마무리하세요.`;
+        }
+
+        steps.push({
+          titleKey: "4단계: 비비고 볶기",
+          titleEn: "Step 4: Stir & Mix",
+          titleZh: "第4步: 酱料拌炒",
+          titleEs: "Paso 4: Mezclar y Saltear",
+          titleDe: "Schritt 4: Rühren & Mischen",
+          titleJa: "ステップ4: ソースと炒める",
+          titleVi: "Bước 4: Trộn và xào",
+          duration: 30,
+          icon: "cooking-pot",
+          ttsKey: "ttsMixSauce",
+          instructions: {
+            ko: step4InstructionKo,
+            en: step4InstructionEn,
+            zh: step4InstructionZh,
+            es: step4InstructionEs,
+            de: step4InstructionDe,
+            ja: step4InstructionJa,
+            vi: step4InstructionVi
+          }
+        });
+
+      } else {
+        // Soup Ramens (Shin, Jin, Neoguri)
+        // Divide base cooking time (e.g. 270s) into Noodle Stage (base - 90s) & Topping Stage (90s)
+        let mainCookDuration = ramen.baseCookTime - 90;
+        let finalCookDuration = 90;
+
+        // Base instructions
+        let step2InstructionKo = "물이 끓으면 면과 스프, 건더기 스프를 모두 넣고 강한 불로 끓여줍니다.";
+        let step2InstructionEn = "Add noodles, soup powder, and flakes altogether, boil on high heat.";
+        let step2InstructionZh = "水开后，将面条、汤包和干料包全部放入，用大火煮。";
+        let step2InstructionEs = "Agregue los fideos, la sopa y las verduras secas, cocine a fuego alto.";
+        let step2InstructionDe = "Nudeln, Suppenpulver und Flocken zusammengeben, bei starker Hitze kochen.";
+        let step2InstructionJa = "お湯が沸いたら麺と粉末・かやくスープをすべて入れ、強火で煮ます。";
+        let step2InstructionVi = "Khi nước sôi, cho mì, gói gia vị và rau khô vào nấu trên lửa lớn.";
+
+        let ttsKey = "ttsNoodleAndSoup";
+
+        if (hasRiceCake) {
+          step2InstructionKo += " 이때 떡국떡도 함께 넣어주세요.";
+          step2InstructionEn += " Also add the rice cakes now.";
+          step2InstructionZh += " 此时也将年糕片放入。";
+          step2InstructionEs += " También agregue los pasteles de arroz ahora.";
+          step2InstructionDe += " Fügen Sie jetzt auch den Reiskuchen hinzu.";
+          step2InstructionJa += " この時にトックも一緒にいれてください。";
+          step2InstructionVi += " Lúc này hãy cho cả bánh gạo vào nấu cùng.";
+          ttsKey = "ttsNoodleWithRicecake";
+        }
+
+        if (hasEgg && selectedEggStyle === 'full') {
+          step2InstructionKo += " 완숙용 계란을 지금 넣어 잘 풀어주세요.";
+          step2InstructionEn += " Add your egg now and stir for hard-boiled style.";
+          step2InstructionZh += " 现在放入鸡蛋并打散，以便做成全熟。";
+          step2InstructionEs += " Agregue el huevo ahora y revuélvalo para que quede bien cocido.";
+          step2InstructionDe += " Ei jetzt hinzufügen und umrühren für hartgekochte Art.";
+          step2InstructionJa += " 固茹で用の卵を今入れてよく混ぜてください。";
+          step2InstructionVi += " Cho trứng vào ngay bây giờ và khuấy đều để chín kỹ.";
+          ttsKey = "ttsNoodleWithFullEgg";
+        }
+
+        steps.push({
+          titleKey: "2단계: 면 & 스프 넣기",
+          titleEn: "Step 2: Add Noodles & Soup",
+          titleZh: "第2步: 放面和调料",
+          titleEs: "Paso 2: Agregar fideos y sopa",
+          titleDe: "Schritt 2: Nudeln & Suppe",
+          titleJa: "ステップ2: 麺とスープを入れる",
+          titleVi: "Bước 2: Cho mì & gia vị",
+          duration: mainCookDuration,
+          icon: "flame",
+          ttsKey: ttsKey,
+          instructions: {
+            ko: step2InstructionKo,
+            en: step2InstructionEn,
+            zh: step2InstructionZh,
+            es: step2InstructionEs,
+            de: step2InstructionDe,
+            ja: step2InstructionJa,
+            vi: step2InstructionVi
+          }
+        });
+
+        // STEP 3: Add final Toppings (such as green onion, cheese, or soft-boiled egg)
+        let step3InstructionKo = "마무리 단계입니다.";
+        let step3InstructionEn = "Final stage.";
+        let step3InstructionZh = "最后阶段。";
+        let step3InstructionEs = "Etapa final.";
+        let step3InstructionDe = "Endphase.";
+        let step3InstructionJa = "最後の仕上げ段階です。";
+        let step3InstructionVi = "Giai đoạn hoàn thành.";
+
+        let ttsToppingKey = "ttsToppingAdd";
+
+        let toppingListKo = [];
+        let toppingListEn = [];
+        let toppingListZh = [];
+        let toppingListEs = [];
+        let toppingListDe = [];
+        let toppingListJa = [];
+        let toppingListVi = [];
+
+        if (hasGreenOnion) {
+          toppingListKo.push("대파"); toppingListEn.push("green onion"); toppingListZh.push("大葱");
+          toppingListEs.push("cebollín"); toppingListDe.push("Frühlingszwiebeln"); toppingListJa.push("ネギ"); toppingListVi.push("hành lá");
+        }
+        if (hasCheese) {
+          toppingListKo.push("치즈"); toppingListEn.push("cheese"); toppingListZh.push("芝士");
+          toppingListEs.push("queso"); toppingListDe.push("Käse"); toppingListJa.push("チーズ"); toppingListVi.push("phô mai");
+        }
+        if (hasEgg && selectedEggStyle === 'half') {
+          toppingListKo.push("계란(반숙용, 젓지 않음)"); toppingListEn.push("egg (soft-boiled, do not stir)"); toppingListZh.push("鸡蛋(做半熟，不搅拌)");
+          toppingListEs.push("huevo (poco cocido, no revuelto)"); toppingListDe.push("Ei (weichgekocht, nicht rühren)"); toppingListJa.push("卵（半熟用、混ぜない）"); toppingListVi.push("trứng (lòng đào, không khuấy)");
+          ttsToppingKey = "ttsHalfEggAdd";
+        }
+
+        if (toppingListKo.length > 0) {
+          step3InstructionKo += ` 준비된 토핑(${toppingListKo.join(", ")})을 냄비에 올리고 남은 시간 동안 끓여주세요.`;
+          step3InstructionEn += ` Put toppings (${toppingListEn.join(", ")}) into the pot and boil for the remaining time.`;
+          step3InstructionZh += ` 将准备好的配料(${toppingListZh.join(", ")})放入锅中并继续煮。`;
+          step3InstructionEs += ` Coloque los ingredientes (${toppingListEs.join(", ")}) en la olla y hierva el tiempo restante.`;
+          step3InstructionDe += ` Geben Sie die vorbereiteten Toppings (${toppingListDe.join(", ")}) in den Topf und lassen Sie sie kochen.`;
+          step3InstructionJa += ` 準備したトッピング（${toppingListJa.join(", ")}）を入れて残りの時間煮込みます。`;
+          step3InstructionVi += ` Cho các topping đã chuẩn bị (${toppingListVi.join(", ")}) vào nồi và nấu nốt thời gian còn lại.`;
+        } else {
+          step3InstructionKo += " 면발의 쫄깃함을 유지하기 위해 면을 가끔 공기 중에 들었다 놓았다 하며 남은 시간 조리합니다.";
+          step3InstructionEn += " Lift noodles occasionally into the air to maintain chewiness for the remaining time.";
+          step3InstructionZh += " 偶尔将面条捞起接触空气以保持劲道，直至煮熟。";
+          step3InstructionEs += " Levante los fideos de vez en cuando al aire para mantener la firmeza.";
+          step3InstructionDe += " Heben Sie die Nudeln gelegentlich an die Luft, um die Elastizität zu erhalten.";
+          step3InstructionJa += " コシを出すために麺を時々空気中に持ち上げながら、残りの時間調理します。";
+          step3InstructionVi += " Thỉnh thoảng vớt sợi mì lên cao để tiếp xúc không khí giúp mì dai ngon hơn.";
+        }
+
+        steps.push({
+          titleKey: "3단계: 토핑 추가 & 졸이기",
+          titleEn: "Step 3: Add Toppings & Simmer",
+          titleZh: "第3步: 加配料并收汁",
+          titleEs: "Paso 3: Agregar toppings y hervir",
+          titleDe: "Schritt 3: Toppings & Simmern",
+          titleJa: "ステップ3: トッピング追加＆煮込み",
+          titleVi: "Bước 3: Thêm topping & đun nhỏ lửa",
+          duration: finalCookDuration,
+          icon: "cooking-pot",
+          ttsKey: ttsToppingKey,
+          instructions: {
+            ko: step3InstructionKo,
+            en: step3InstructionEn,
+            zh: step3InstructionZh,
+            es: step3InstructionEs,
+            de: step3InstructionDe,
+            ja: step3InstructionJa,
+            vi: step3InstructionVi
+          }
+        });
+
+        // STEP 4: Complete
+        steps.push({
+          titleKey: "4단계: 완성과 서빙",
+          titleEn: "Step 4: Serve & Enjoy",
+          titleZh: "第4步: 完工与享用",
+          titleEs: "Paso 4: Servir y Disfrutar",
+          titleDe: "Schritt 4: Servieren & Genießen",
+          titleJa: "ステップ4: 完成と盛り付け",
+          titleVi: "Bước 4: Hoàn thành & thưởng thức",
+          duration: 0,
+          icon: "award",
+          ttsKey: "ttsFinishSoup",
+          instructions: {
+            ko: "불을 끄고 라면을 그릇에 예쁘게 담으세요. 맛있는 한 끼 식사가 완성되었습니다!",
+            en: "Turn off the heat and transfer ramen to a bowl. Your delicious meal is ready!",
+            zh: "关火并将拉面盛入碗中。美味的拉面大功告成！",
+            es: "Apague el fuego y sirva el ramen en un plato. ¡Su deliciosa comida está lista!",
+            de: "Schalten Sie den Herd aus und füllen Sie die Ramen in eine Schüssel. Ihr köstliches Mahl ist fertig!",
+            ja: "火を止め、ラーメンを器に綺麗に盛ります。美味しいラーメンの完成です！",
+            vi: "Tắt bếp và múc mì ra bát. Bữa ăn ngon lành đã sẵn sàng!"
+          }
+        });
+      }
+
+      // Update Engine state
+      activeSteps = steps;
+      currentStepIdx = 0;
+      
+      // Update Core UI
+      const rInfo = ramyuns.find(r => r.id === selectedRamenId);
+      document.getElementById('display-ramen-name').innerText = translateRamenName(selectedRamenId);
+      document.getElementById('display-ramen-desc').innerText = translations[currentLang]["desc" + selectedRamenId.charAt(0).toUpperCase() + selectedRamenId.slice(1)];
+      document.getElementById('display-water-amount').innerText = `${rInfo.water} ml`;
+
+      setStep(0);
+    }
+
+    // Set Active Step (Zero-based)
+    function setStep(idx) {
+      if (idx < 0 || idx >= activeSteps.length) return;
+      
+      // Pause active timers
+      if (timerInterval) clearInterval(timerInterval);
+      isPlaying = false;
+      updateControlButtons();
+
+      currentStepIdx = idx;
+      const step = activeSteps[currentStepIdx];
+      
+      timerVal = step.duration;
+      initialTimerVal = step.duration;
+
+      updateStepUI();
+      speakInstruction(step.ttsKey, step.instructions);
+    }
+
+    // Update Step UI
+    function updateStepUI() {
+      if (activeSteps.length === 0) return;
+      const step = activeSteps[currentStepIdx];
+      const lang = currentLang;
+
+      // Translate Titles & Descriptions based on selectedLang
+      let stepTitle = "";
+      let stepInstruction = "";
+
+      if (currentStepIdx === 0) {
+        stepTitle = translations[lang].gas + "/" + translations[lang].induction + " " + getStepLocalTitle(step, lang);
+        stepInstruction = translations[lang].ttsWaterBoil + " (" + ramyuns.find(r=>r.id === selectedRamenId).water + "ml)";
+      } else {
+        stepTitle = getStepLocalTitle(step, lang);
+        stepInstruction = step.instructions ? step.instructions[lang] : translations[lang][step.ttsKey] || "";
+      }
+
+      document.getElementById('display-step-title').innerText = stepTitle;
+      document.getElementById('display-step-instruction').innerText = stepInstruction;
+      document.getElementById('display-current-step-index').innerText = `STEP ${currentStepIdx + 1} / ${activeSteps.length}`;
+
+      // Set icons using Lucide mapping
+      const iconContainer = document.getElementById('step-icon-bg');
+      iconContainer.innerHTML = `<i data-lucide="${step.icon}" class="w-8 h-8"></i>`;
+      
+      // Handle completion UI
+      if (step.duration === 0) {
+        document.getElementById('timer-text').innerText = "DONE";
+        document.getElementById('timer-status-tag').innerText = translations[lang].completed;
+        drawCircleProgress(100);
+      } else {
+        updateTimerDisplay();
+      }
+
+      // Update Step progress bars visual indicators
+      for (let i = 0; i < 4; i++) {
+        const bar = document.getElementById(`bar-step-${i}`);
+        if (!bar) continue;
+        const barInner = bar.querySelector('div');
+        if (i < currentStepIdx) {
+          barInner.style.width = "100%";
+          bar.className = "h-2 rounded-full bg-red-100 overflow-hidden";
+        } else if (i === currentStepIdx) {
+          barInner.style.width = "0%";
+          bar.className = "h-2 rounded-full bg-red-500 overflow-hidden animate-pulse";
+        } else {
+          barInner.style.width = "0%";
+          bar.className = "h-2 rounded-full bg-gray-200 overflow-hidden";
+        }
+      }
+
+      // Render Dynamic Topping Alerts in Step 2 & 3
+      const toppingIndicator = document.getElementById('active-toppings-indicator');
+      const hasRiceCake = document.getElementById('topping-ricecake').checked;
+      const hasGreenOnion = document.getElementById('topping-greenonion').checked;
+      const hasCheese = document.getElementById('topping-cheese').checked;
+      const hasEgg = document.getElementById('topping-egg').checked;
+
+      let subToppingText = "";
+      if (currentStepIdx === 1) { // Adding main ingredients
+        let tpList = [];
+        if (hasRiceCake) tpList.push(translations[lang].ricecake);
+        if (hasEgg && selectedEggStyle === 'full') tpList.push(translations[lang].egg + " (" + translations[lang].full + ")");
+        if (tpList.length > 0) {
+          subToppingText = `+ ${tpList.join(", ")}`;
+        }
+      } else if (currentStepIdx === 2) { // Final adjustments
+        let tpList = [];
+        if (hasGreenOnion) tpList.push(translations[lang].greenonion);
+        if (hasCheese) tpList.push(translations[lang].cheese);
+        if (hasEgg && selectedEggStyle === 'half') tpList.push(translations[lang].egg + " (" + translations[lang].half + ")");
+        if (tpList.length > 0) {
+          subToppingText = `+ ${tpList.join(", ")}`;
+        }
+      }
+
+      if (subToppingText) {
+        toppingIndicator.innerText = subToppingText;
+        toppingIndicator.classList.remove('hidden');
+      } else {
+        toppingIndicator.classList.add('hidden');
+      }
+
+      lucide.createIcons();
+    }
+
+    function getStepLocalTitle(step, lang) {
+      if (lang === 'en') return step.titleEn;
+      if (lang === 'zh') return step.titleZh;
+      if (lang === 'es') return step.titleEs;
+      if (lang === 'de') return step.titleDe;
+      if (lang === 'ja') return step.titleJa;
+      if (lang === 'vi') return step.titleVi;
+      return step.titleKey; // Korean fallback
+    }
+
+    // Speech Engine (Clean: Filtering out Emoji codes and brackets from TTS string)
+    function speakInstruction(key, customInstructionMap) {
+      if (!('speechSynthesis' in window)) return;
+      
+      // Cancel previous speaking to prevent overlapping
+      window.speechSynthesis.cancel();
+
+      let ttsText = "";
+      if (customInstructionMap && customInstructionMap[currentLang]) {
+        ttsText = customInstructionMap[currentLang];
+      } else {
+        ttsText = translations[currentLang][key] || "";
+      }
+
+      // Stripping all Emoji icons to fulfill the design condition "이모티콘은 읽지 않기"
+      // Clean up string using Regex to preserve letters and basic punctuation only
+      const cleanText = ttsText.replace(/[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF]/g, "")
+                               .replace(/[🍜🔥🥬🍳🌾🌱🧀🥚⏱🔔👍✅]/g, "")
+                               .replace(/\s+/g, ' ')
+                               .trim();
+
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      
+      // Select best voice matching the current language code
+      const voices = window.speechSynthesis.getVoices();
+      const voiceLocaleMap = {
+        ko: "ko-KR",
+        en: "en-US",
+        zh: "zh-CN",
+        es: "es-ES",
+        de: "de-DE",
+        ja: "ja-JP",
+        vi: "vi-VN"
+      };
+      
+      const targetLocale = voiceLocaleMap[currentLang];
+      const matchedVoice = voices.find(v => v.lang.startsWith(targetLocale));
+      if (matchedVoice) {
+        utterance.voice = matchedVoice;
+      }
+      utterance.lang = targetLocale;
+      utterance.rate = 1.0;
+      
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // Playback Mechanics
+    function toggleTimer() {
+      if (activeSteps.length === 0) return;
+      
+      if (isPlaying) {
+        // Pause
+        clearInterval(timerInterval);
+        isPlaying = false;
+        document.getElementById('timer-status-tag').innerText = translations[currentLang].paused;
+        updateControlButtons();
+      } else {
+        // Start
+        if (activeSteps[currentStepIdx].duration === 0) {
+          // Finished step, cannot play
+          return;
+        }
+        isPlaying = true;
+        document.getElementById('timer-status-tag').innerText = translations[currentLang].cooking;
+        updateControlButtons();
+
+        // Trigger TTS immediately when start is explicitly clicked
+        if (timerVal === initialTimerVal) {
+          speakInstruction(activeSteps[currentStepIdx].ttsKey, activeSteps[currentStepIdx].instructions);
+        }
+
+        timerInterval = setInterval(() => {
+          if (timerVal > 0) {
+            timerVal--;
+            updateTimerDisplay();
+          } else {
+            // Timer expired!
+            clearInterval(timerInterval);
+            isPlaying = false;
+            triggerAlarm();
+          }
+        }, 1000);
+      }
+    }
+
+    function advanceStep() {
+      if (currentStepIdx < activeSteps.length - 1) {
+        setStep(currentStepIdx + 1);
+      } else {
+        // Loop back to start setup
+        applyConfiguration();
+      }
+    }
+
+    function updateTimerDisplay() {
+      const minutes = Math.floor(timerVal / 60);
+      const seconds = timerVal % 60;
+      const formattedMin = String(minutes).padStart(2, '0');
+      const formattedSec = String(seconds).padStart(2, '0');
+      
+      document.getElementById('timer-text').innerText = `${formattedMin}:${formattedSec}`;
+      
+      // Visual Circular Ring update
+      if (initialTimerVal > 0) {
+        const percent = (timerVal / initialTimerVal) * 100;
+        drawCircleProgress(percent);
+      }
+    }
+
+    function drawCircleProgress(percent) {
+      const circle = document.getElementById('timer-ring');
+      // Circumference = 2 * PI * r = 2 * 3.14159 * 46 = 289
+      const maxOffset = 289;
+      const offset = maxOffset - (percent / 100) * maxOffset;
+      circle.style.strokeDashoffset = offset;
+    }
+
+    function updateControlButtons() {
+      const btnPlay = document.getElementById('btn-master-play');
+      const textPlay = document.getElementById('text-play');
+      const iconPlay = document.getElementById('icon-play');
+
+      if (isPlaying) {
+        btnPlay.className = "col-span-5 py-4 px-3 bg-amber-500 text-white rounded-2xl font-black text-base shadow-lg shadow-amber-500/20 hover:opacity-95 transition-all flex items-center justify-center gap-2";
+        textPlay.innerText = translations[currentLang].btnPause;
+        iconPlay.setAttribute('data-lucide', 'pause');
+      } else {
+        btnPlay.className = "col-span-5 py-4 px-3 bg-green-500 text-white rounded-2xl font-black text-base shadow-lg shadow-green-500/20 hover:opacity-95 transition-all flex items-center justify-center gap-2";
+        textPlay.innerText = translations[currentLang].btnPlay;
+        iconPlay.setAttribute('data-lucide', 'play');
+      }
+      lucide.createIcons();
+    }
+
+    function triggerAlarm() {
+      // Play Audio Beep
+      const alarm = document.getElementById('alarm-sound');
+      alarm.play().catch(e => console.log("Audio playback blocked by browser security policy. Will use TTS instead."));
+      
+      // Set State
+      document.getElementById('timer-status-tag').innerText = "DONE";
+      
+      // Open Custom Prompt Modal (Doesn't block script execution like standard alert)
+      document.getElementById('modal-title').innerText = translations[currentLang].modalTitle;
+      document.getElementById('modal-desc').innerText = getStepLocalTitle(activeSteps[currentStepIdx], currentLang) + " " + translations[currentLang].completed;
+      document.getElementById('alert-modal').classList.remove('hidden');
+
+      // Pronounce Step finished in chosen language
+      const finishNotifyText = getStepLocalTitle(activeSteps[currentStepIdx], currentLang) + " 완료되었습니다. 다음 단계로 넘어가시려면 다음 단계 버튼을 클릭해 주세요.";
+      const finishUtterance = new SpeechSynthesisUtterance(finishNotifyText);
+      finishUtterance.lang = "ko-KR"; // Korean fallback announcement
+      if (currentLang !== 'ko') {
+        const enNotifyText = "Step finished. Please click next step button to proceed.";
+        finishUtterance.text = enNotifyText;
+        finishUtterance.lang = "en-US";
+      }
+      window.speechSynthesis.speak(finishUtterance);
+    }
+
+    function closeModal() {
+      document.getElementById('alert-modal').classList.add('hidden');
+      advanceStep();
+    }
+  </script>
+</body>
+</html>
